@@ -229,7 +229,7 @@ export const OwnerSettingsModal: React.FC<OwnerSettingsModalProps> = ({
                     type="text"
                     value={newDateInput}
                     onChange={(e) => setNewDateInput(e.target.value)}
-                    placeholder="Contoh: Sabtu, 7 November 2026"
+                    placeholder="Contoh: Rabu, 28 Oktober 2026"
                     className="flex-1 px-3 py-2 rounded-xl border border-[#F4A7C4] text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#D94D82]"
                   />
                   <button

@@ -83,9 +83,7 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   isWhatsAppConfigured: true,
   // Confirmed pre-order schedule dates. Can be configured/updated by owner.
   preOrderDates: [
-    'Sabtu, 31 Oktober 2026',
-    'Minggu, 1 November 2026',
-    'Rabu, 4 November 2026'
+    'Rabu, 28 Oktober 2026'
   ],
   instagramUrl: '',
   pickupDeliveryInfo: '',
@@ -101,18 +99,29 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   confirmedPudotVariants: []
 };
 
-export const SETTINGS_STORAGE_KEY = 'bbchi_business_settings_v1';
+export const SETTINGS_STORAGE_KEY = 'bbchi_business_settings_v2';
 
 export function loadStoredSettings(): BusinessSettings {
   if (typeof window === 'undefined') return DEFAULT_BUSINESS_SETTINGS;
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return DEFAULT_BUSINESS_SETTINGS;
+    if (!raw) {
+      // Clear legacy storage key if exists
+      try { localStorage.removeItem('bbchi_business_settings_v1'); } catch {}
+      return DEFAULT_BUSINESS_SETTINGS;
+    }
     const parsed = JSON.parse(raw);
     // If stored settings had empty or unconfigured number, use confirmed number
     if (!parsed.whatsappNumber || parsed.whatsappNumber.trim() === '') {
       parsed.whatsappNumber = CONFIRMED_WHATSAPP_NUMBER;
       parsed.isWhatsAppConfigured = true;
+    }
+    // Migrate old default pre-order dates to the new 28 Oktober 2026 date
+    if (
+      Array.isArray(parsed.preOrderDates) &&
+      (parsed.preOrderDates.includes('Sabtu, 31 Oktober 2026') || parsed.preOrderDates.length === 0)
+    ) {
+      parsed.preOrderDates = DEFAULT_BUSINESS_SETTINGS.preOrderDates;
     }
     return { ...DEFAULT_BUSINESS_SETTINGS, ...parsed };
   } catch {

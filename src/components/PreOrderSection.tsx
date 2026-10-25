@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CartItem, BusinessSettings, PreOrderCustomerInfo } from '../types';
 import {
   formatRupiah,
@@ -28,6 +28,16 @@ export const PreOrderSection: React.FC<PreOrderSectionProps> = ({
     preOrderDate: settings.preOrderDates[0] || '',
     notes: '',
   });
+
+  // Automatically synchronize preOrderDate if settings change
+  useEffect(() => {
+    if (settings.preOrderDates.length > 0 && !settings.preOrderDates.includes(formData.preOrderDate)) {
+      setFormData((prev) => ({
+        ...prev,
+        preOrderDate: settings.preOrderDates[0],
+      }));
+    }
+  }, [settings.preOrderDates, formData.preOrderDate]);
 
   const [errors, setErrors] = useState<{
     name?: string;
