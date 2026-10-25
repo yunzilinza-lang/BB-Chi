@@ -7,7 +7,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'chocolate-mochi',
     price: 7000,
     unit: 'per porsi',
-    description: 'Mochi dengan tekstur kenyal dan isian cokelat yang lembut, lumer, cocok untuk pecinta dessert manis dan memikat.',
+    promoBadge: 'PROMO: 3 Pcs Rp 20.000',
+    description: 'Mochi dengan tekstur kenyal dan isian cokelat lembut lumer melimpah. Promo spesial: beli 3 pcs hanya Rp 20.000 (dari Rp 21.000, hemat Rp 1.000)!',
     imageUrl: '/assets/brand/chocolate-mochi-square.jpg',
     detailImageUrl: '/assets/brand/chocolate-mochi-full.jpg',
     available: true,
@@ -144,18 +145,61 @@ export function formatRupiah(amount: number): string {
   return `Rp ${formatted}`;
 }
 
+/**
+ * Calculates item line total, applying bundle discounts.
+ * Chocolate Mochi Promo:
+ * Every bundle of 3 pcs costs Rp 20.000 (normal 3 x Rp 7.000 = Rp 21.000, saving Rp 1.000 per 3 pcs).
+ */
+export function calculateItemTotal(productId: string, unitPrice: number, quantity: number): {
+  originalTotal: number;
+  finalTotal: number;
+  discount: number;
+  promoApplied: boolean;
+  promoDescription?: string;
+} {
+  const originalTotal = unitPrice * quantity;
+
+  if (productId === 'chocolate-mochi' && quantity >= 3) {
+    const bundleCount = Math.floor(quantity / 3);
+    const remainder = quantity % 3;
+    const finalTotal = (bundleCount * 20000) + (remainder * 7000);
+    const discount = originalTotal - finalTotal;
+    return {
+      originalTotal,
+      finalTotal,
+      discount,
+      promoApplied: true,
+      promoDescription: `Promo 3 Pcs Rp 20.000 (Hemat ${formatRupiah(discount)})`,
+    };
+  }
+
+  return {
+    originalTotal,
+    finalTotal: originalTotal,
+    discount: 0,
+    promoApplied: false,
+  };
+}
+
 export function buildWhatsAppOrderMessage(
   customer: PreOrderCustomerInfo,
   cart: CartItem[],
   subtotal: number
 ): string {
+  let totalSaved = 0;
   const itemsText = cart
     .map(item => {
       const variantText = item.selectedVariant ? ` (${item.selectedVariant})` : '';
-      const lineTotal = item.price * item.quantity;
-      return `- ${item.name}${variantText} x${item.quantity} = ${formatRupiah(lineTotal)}`;
+      const calc = calculateItemTotal(item.productId, item.price, item.quantity);
+      totalSaved += calc.discount;
+      if (calc.promoApplied) {
+        return `- ${item.name}${variantText} x${item.quantity} = ${formatRupiah(calc.finalTotal)} (Promo 3 pcs, hemat ${formatRupiah(calc.discount)})`;
+      }
+      return `- ${item.name}${variantText} x${item.quantity} = ${formatRupiah(calc.finalTotal)}`;
     })
     .join('\n');
+
+  const promoSummaryNote = totalSaved > 0 ? `\nTotal Hemat Promo: ${formatRupiah(totalSaved)}` : '';
 
   return `Halo BB Chi! Saya ingin melakukan pre-order.
 
@@ -165,7 +209,7 @@ Nomor WhatsApp: ${customer.whatsapp.trim()}
 Pesanan:
 ${itemsText}
 
-Subtotal: ${formatRupiah(subtotal)}
+Subtotal: ${formatRupiah(subtotal)}${promoSummaryNote}
 Tanggal pre-order: ${customer.preOrderDate.trim() || '-'}
 Catatan: ${customer.notes.trim() || '-'}
 
@@ -188,12 +232,16 @@ export function buildDirectBuyMessage(
   variant?: string
 ): string {
   const variantText = variant ? ` (${variant})` : '';
-  const total = product.price * quantity;
+  const calc = calculateItemTotal(product.id, product.price, quantity);
+  const promoNote = calc.promoApplied
+    ? `\n🎉 Promo Aktif: Beli 3 pcs seharga ${formatRupiah(calc.finalTotal)} (Normal ${formatRupiah(calc.originalTotal)}, hemat ${formatRupiah(calc.discount)})!`
+    : '';
+
   return `Halo BB Chi! Saya mau beli langsung:
 
 Produk: ${product.name}${variantText}
 Jumlah: ${quantity} ${product.unit}
-Total perkiraan: ${formatRupiah(total)}
+Total perkiraan: ${formatRupiah(calc.finalTotal)}${promoNote}
 
 Mohon info ketersediaan slot hari ini / batch pre-order terdekat dan total pembayarannya ya. Terima kasih!`;
 }

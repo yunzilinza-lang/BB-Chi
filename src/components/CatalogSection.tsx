@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Product, ProductCategory } from '../types';
-import { formatRupiah } from '../data/initialBusinessConfig';
-import { Plus, Minus, Check, Eye, MessageCircle } from 'lucide-react';
+import { formatRupiah, calculateItemTotal } from '../data/initialBusinessConfig';
+import { Plus, Minus, Check, Eye, MessageCircle, Sparkles } from 'lucide-react';
 
 interface CatalogSectionProps {
   products: Product[];
@@ -93,6 +93,7 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
           {filteredProducts.map((product) => {
             const currentQty = getQuantity(product.id);
             const isAdded = addedAnimation[product.id];
+            const itemCalc = calculateItemTotal(product.id, product.price, currentQty);
 
             return (
               <div
@@ -110,7 +111,13 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
                     />
 
                     {/* Availability Tag */}
-                    <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3">
+                    <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex flex-col gap-1 items-start">
+                      {product.promoBadge && (
+                        <span className="bg-[#D94D82] text-white px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold shadow-xs flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 fill-white" />
+                          {product.promoBadge}
+                        </span>
+                      )}
                       {product.available ? (
                         <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold text-[#4A211D] shadow-xs">
                           Tersedia Pre-Order
@@ -138,20 +145,46 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
                     <h3 className="font-['Playfair_Display'] font-bold text-lg sm:text-xl text-[#4A211D] group-hover:text-[#D94D82] transition-colors leading-snug">
                       {product.name}
                     </h3>
-                    <div className="flex items-baseline gap-2 mt-1">
+                    <div className="flex flex-wrap items-baseline gap-2 mt-1">
                       <span className="text-base sm:text-lg font-bold text-[#D94D82] tabular-nums">
                         {formatRupiah(product.price)}
                       </span>
                       <span className="text-xs text-[#4A211D]/60 font-medium">
                         {product.unit}
                       </span>
+                      {product.id === 'chocolate-mochi' && (
+                        <span className="text-[10px] sm:text-[11px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                          3 Pcs Rp 20.000
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Description */}
-                  <p className="text-xs sm:text-sm text-[#4A211D]/75 line-clamp-2 leading-relaxed mb-4 sm:mb-5">
+                  <p className="text-xs sm:text-sm text-[#4A211D]/75 line-clamp-2 leading-relaxed mb-3 sm:mb-4">
                     {product.description}
                   </p>
+
+                  {/* Promo Banner / Hint for Chocolate Mochi */}
+                  {product.id === 'chocolate-mochi' && (
+                    <div className="mb-3">
+                      {itemCalc.promoApplied ? (
+                        <div className="py-1 px-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-bold text-emerald-800 flex items-center justify-between">
+                          <span>🎉 Promo 3 Pcs Aktif!</span>
+                          <span className="tabular-nums">Hemat {formatRupiah(itemCalc.discount)}</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleQuantityChange(product.id, 3 - currentQty)}
+                          className="w-full text-left py-1 px-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-[11px] font-semibold text-rose-900 transition-colors flex items-center justify-between"
+                        >
+                          <span>Beli 3 pcs cukup Rp 20.000</span>
+                          <span className="underline font-bold text-[#D94D82]">+ Jadi 3 pcs</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions & Quantity */}
@@ -202,14 +235,13 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
                     </button>
                   </div>
 
-                  {/* Direct Buy Button to User WhatsApp - Mobile Friendly without overflowing */}
                   <button
                     onClick={() => onDirectBuy?.(product, currentQty)}
                     disabled={!product.available}
                     className="w-full py-2.5 px-3 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20ba5a] text-white transition-all shadow-2xs active:scale-95 disabled:bg-stone-200 disabled:text-stone-400 text-center leading-tight min-w-0"
                   >
                     <MessageCircle className="w-3.5 h-3.5 fill-white shrink-0" />
-                    <span className="truncate">Beli via WA ({formatRupiah(product.price * currentQty)})</span>
+                    <span className="truncate">Beli via WA ({formatRupiah(itemCalc.finalTotal)})</span>
                   </button>
 
                   <button

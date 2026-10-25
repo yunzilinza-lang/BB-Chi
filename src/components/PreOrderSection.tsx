@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { CartItem, BusinessSettings, PreOrderCustomerInfo } from '../types';
 import {
   formatRupiah,
+  calculateItemTotal,
   buildWhatsAppOrderMessage,
   buildWhatsAppChatUrl,
 } from '../data/initialBusinessConfig';
-import { MessageCircle, AlertCircle, Info, Calendar, User, Phone, CheckCircle2, Settings } from 'lucide-react';
+import { MessageCircle, AlertCircle, Info, Calendar, User, Phone, CheckCircle2, Settings, Sparkles } from 'lucide-react';
 
 interface PreOrderSectionProps {
   cart: CartItem[];
   subtotal: number;
+  totalDiscount?: number;
   settings: BusinessSettings;
   onOpenSettings: () => void;
   onBrowseCatalog: () => void;
@@ -18,6 +20,7 @@ interface PreOrderSectionProps {
 export const PreOrderSection: React.FC<PreOrderSectionProps> = ({
   cart,
   subtotal,
+  totalDiscount = 0,
   settings,
   onOpenSettings,
   onBrowseCatalog,
@@ -303,17 +306,38 @@ export const PreOrderSection: React.FC<PreOrderSectionProps> = ({
                 </span>
               </div>
               <ul className="text-xs text-[#4A211D]/75 space-y-1.5 max-h-32 overflow-y-auto pr-1 divide-y divide-[#F9DCE5]/40">
-                {cart.map((item) => (
-                  <li key={item.id} className="pt-1.5 first:pt-0 flex items-center justify-between gap-2 min-w-0">
-                    <span className="truncate min-w-0 flex-1">
-                      {item.name} {item.selectedVariant ? `(${item.selectedVariant})` : ''} x{item.quantity}
-                    </span>
-                    <span className="tabular-nums font-semibold shrink-0 text-[#4A211D]">
-                      {formatRupiah(item.price * item.quantity)}
-                    </span>
-                  </li>
-                ))}
+                {cart.map((item) => {
+                  const itemCalc = calculateItemTotal(item.productId, item.price, item.quantity);
+                  return (
+                    <li key={item.id} className="pt-1.5 first:pt-0 flex items-center justify-between gap-2 min-w-0">
+                      <div className="truncate min-w-0 flex-1">
+                        <span>
+                          {item.name} {item.selectedVariant ? `(${item.selectedVariant})` : ''} x{item.quantity}
+                        </span>
+                        {itemCalc.promoApplied && (
+                          <span className="ml-1.5 text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.5 rounded">
+                            Promo 3 pcs
+                          </span>
+                        )}
+                      </div>
+                      <span className="tabular-nums font-semibold shrink-0 text-[#4A211D]">
+                        {formatRupiah(itemCalc.finalTotal)}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
+              {totalDiscount > 0 && (
+                <div className="pt-2 border-t border-[#F9DCE5] flex items-center justify-between text-emerald-800 text-xs font-semibold">
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    Potongan Promo Mochi Coklat:
+                  </span>
+                  <span className="tabular-nums font-bold text-emerald-700">
+                    -{formatRupiah(totalDiscount)}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Clarification Notice */}

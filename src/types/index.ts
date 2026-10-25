@@ -11,6 +11,7 @@ export interface Product {
   detailImageUrl?: string;
   available: boolean;
   confirmedVariants: string[];
+  promoBadge?: string;
 }
 
 export interface CartItem {

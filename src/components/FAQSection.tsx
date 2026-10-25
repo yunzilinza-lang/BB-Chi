@@ -21,8 +21,8 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ settings, onOpenSettings
       a: 'Saat ini BB Chi menyediakan 6 pilihan dessert unggulan: Chocolate Mochi, Mochi Oreo, Fruit Mochi Strawberry, Mochi Mangga, Mochi Semangka, dan Pudot (Puding Sedot). Semua dibuat fresh dari bahan berkualitas.',
     },
     {
-      q: 'Berapa harga mochi dan pudot?',
-      a: 'Chocolate Mochi seharga Rp 7.000 per porsi. Mochi Oreo, Fruit Mochi (Strawberry, Mangga, Semangka), dan Pudot seharga Rp 10.000 per porsi/cup.',
+      q: 'Berapa harga mochi dan pudot? Apakah ada promo?',
+      a: 'Chocolate Mochi seharga Rp 7.000 per porsi, dan ada promo spesial: beli 3 pcs cukup bayar Rp 20.000 (dari normal Rp 21.000, hemat Rp 1.000)! Untuk Mochi Oreo, Fruit Mochi (Strawberry, Mangga, Semangka), dan Pudot seharga Rp 10.000 per porsi/cup.',
     },
     {
       q: 'Apakah ada varian rasa tertentu?',

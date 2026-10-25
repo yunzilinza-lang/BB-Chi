@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
-import { formatRupiah } from '../data/initialBusinessConfig';
-import { X, Plus, Minus, ShoppingBag, Check, MessageCircle } from 'lucide-react';
+import { formatRupiah, calculateItemTotal } from '../data/initialBusinessConfig';
+import { X, Plus, Minus, ShoppingBag, Check, MessageCircle, Sparkles } from 'lucide-react';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -141,14 +141,46 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 {product.name}
               </h2>
 
-              <div className="flex items-baseline gap-2 mb-3 sm:mb-4">
+              <div className="flex flex-wrap items-baseline gap-2 mb-3 sm:mb-4">
                 <span className="text-xl sm:text-2xl font-bold text-[#D94D82] tabular-nums">
                   {formatRupiah(product.price)}
                 </span>
                 <span className="text-xs font-medium text-[#4A211D]/60 uppercase tracking-wide">
                   {product.unit}
                 </span>
+                {product.id === 'chocolate-mochi' && (
+                  <span className="text-[10px] sm:text-[11px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 fill-amber-700 text-amber-700" />
+                    Promo: 3 Pcs Rp 20.000
+                  </span>
+                )}
               </div>
+
+              {/* Promo Banner for Chocolate Mochi */}
+              {product.id === 'chocolate-mochi' && (
+                <div className="mb-4 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-[#4A211D]">
+                  <div className="font-bold text-[#D94D82] flex items-center gap-1.5 mb-1">
+                    <Sparkles className="w-3.5 h-3.5 fill-[#D94D82]" />
+                    <span>Promo Spesial Chocolate Mochi: 3 Pcs Rp 20.000!</span>
+                  </div>
+                  <p className="text-[11px] text-[#4A211D]/80 leading-relaxed">
+                    Setiap pembelian kelipatan 3 pcs otomatis didiskon dari harga normal Rp 21.000 menjadi Rp 20.000 (hemat Rp 1.000).
+                  </p>
+                  {quantity < 3 ? (
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(3)}
+                      className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-[#D94D82] hover:underline"
+                    >
+                      + Langsung pilih 3 pcs (Rp 20.000) →
+                    </button>
+                  ) : (
+                    <div className="mt-1 text-[11px] font-bold text-emerald-700">
+                      ✓ Promo 3 pcs aktif pada kuantitas yang kamu pilih!
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="mb-4 sm:mb-6">
                 <h4 className="text-xs font-bold text-[#4A211D]/70 uppercase tracking-wider mb-1">
@@ -210,48 +242,65 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </div>
 
               {/* Total Calculation */}
-              <div className="flex items-center justify-between text-xs sm:text-sm py-2 px-3 rounded-xl bg-[#FFF9F5] border border-[#F9DCE5]">
-                <span className="text-[#4A211D]/70 font-medium">Subtotal:</span>
-                <span className="font-bold text-[#D94D82] tabular-nums">
-                  {formatRupiah(lineTotal)}
-                </span>
-              </div>
+              {(() => {
+                const itemCalc = calculateItemTotal(product.id, product.price, quantity);
+                return (
+                  <div className="flex items-center justify-between text-xs sm:text-sm py-2 px-3 rounded-xl bg-[#FFF9F5] border border-[#F9DCE5]">
+                    <span className="text-[#4A211D]/70 font-medium">Subtotal Pilihan:</span>
+                    <div className="text-right">
+                      <span className="font-bold text-[#D94D82] tabular-nums text-sm sm:text-base">
+                        {formatRupiah(itemCalc.finalTotal)}
+                      </span>
+                      {itemCalc.promoApplied && (
+                        <div className="text-[10px] text-emerald-700 font-bold">
+                          Hemat {formatRupiah(itemCalc.discount)} (dari <span className="line-through">{formatRupiah(itemCalc.originalTotal)}</span>)
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Add Button & Direct Buy Button */}
-              <div className="flex flex-col gap-2 sm:gap-2.5">
-                <button
-                  onClick={handleDirectBuy}
-                  disabled={!product.available}
-                  className="w-full py-3 sm:py-3.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] text-white shadow-sm transition-all active:scale-95 disabled:bg-stone-200 disabled:text-stone-400 disabled:cursor-not-allowed min-w-0"
-                >
-                  <MessageCircle className="w-4 h-4 fill-white shrink-0" />
-                  <span className="truncate">Beli via WA ({formatRupiah(lineTotal)})</span>
-                </button>
+              {(() => {
+                const itemCalc = calculateItemTotal(product.id, product.price, quantity);
+                return (
+                  <div className="flex flex-col gap-2 sm:gap-2.5">
+                    <button
+                      onClick={handleDirectBuy}
+                      disabled={!product.available}
+                      className="w-full py-3 sm:py-3.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] text-white shadow-sm transition-all active:scale-95 disabled:bg-stone-200 disabled:text-stone-400 disabled:cursor-not-allowed min-w-0"
+                    >
+                      <MessageCircle className="w-4 h-4 fill-white shrink-0" />
+                      <span className="truncate">Beli via WA ({formatRupiah(itemCalc.finalTotal)})</span>
+                    </button>
 
-                <button
-                  onClick={handleAdd}
-                  disabled={!product.available}
-                  className={`w-full py-2.5 sm:py-3 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 border border-[#F4A7C4] transition-all active:scale-95 min-w-0 ${
-                    !product.available
-                      ? 'bg-stone-200 text-stone-400 cursor-not-allowed border-transparent'
-                      : isSuccess
-                      ? 'bg-emerald-600 text-white border-transparent'
-                      : 'bg-[#FFF9F5] hover:bg-[#F9DCE5]/60 text-[#4A211D]'
-                  }`}
-                >
-                  {isSuccess ? (
-                    <>
-                      <Check className="w-4 h-4 shrink-0" />
-                      <span className="truncate">Berhasil Masuk Keranjang!</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="w-4 h-4 text-[#D94D82] shrink-0" />
-                      <span className="truncate">+ Tambah ke Keranjang</span>
-                    </>
-                  )}
-                </button>
-              </div>
+                    <button
+                      onClick={handleAdd}
+                      disabled={!product.available}
+                      className={`w-full py-2.5 sm:py-3 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 border border-[#F4A7C4] transition-all active:scale-95 min-w-0 ${
+                        !product.available
+                          ? 'bg-stone-200 text-stone-400 cursor-not-allowed border-transparent'
+                          : isSuccess
+                          ? 'bg-emerald-600 text-white border-transparent'
+                          : 'bg-[#FFF9F5] hover:bg-[#F9DCE5]/60 text-[#4A211D]'
+                      }`}
+                    >
+                      {isSuccess ? (
+                        <>
+                          <Check className="w-4 h-4 shrink-0" />
+                          <span className="truncate">Berhasil Masuk Keranjang!</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag className="w-4 h-4 text-[#D94D82] shrink-0" />
+                          <span className="truncate">+ Tambah ke Keranjang</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

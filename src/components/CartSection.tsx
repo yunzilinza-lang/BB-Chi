@@ -1,11 +1,12 @@
 import React from 'react';
 import { CartItem } from '../types';
-import { formatRupiah } from '../data/initialBusinessConfig';
-import { Plus, Minus, Trash2, ArrowLeft, ArrowRight, ShoppingBag, MessageCircle } from 'lucide-react';
+import { formatRupiah, calculateItemTotal } from '../data/initialBusinessConfig';
+import { Plus, Minus, Trash2, ArrowLeft, ArrowRight, ShoppingBag, MessageCircle, Sparkles } from 'lucide-react';
 
 interface CartSectionProps {
   cart: CartItem[];
   subtotal: number;
+  totalDiscount?: number;
   onUpdateQuantity: (itemId: string, newQty: number) => void;
   onRemoveItem: (itemId: string) => void;
   onContinueShopping: () => void;
@@ -16,6 +17,7 @@ interface CartSectionProps {
 export const CartSection: React.FC<CartSectionProps> = ({
   cart,
   subtotal,
+  totalDiscount = 0,
   onUpdateQuantity,
   onRemoveItem,
   onContinueShopping,
@@ -58,7 +60,7 @@ export const CartSection: React.FC<CartSectionProps> = ({
             <div className="space-y-6">
               <div className="divide-y divide-[#F9DCE5]">
                 {cart.map((item) => {
-                  const lineTotal = item.price * item.quantity;
+                  const itemCalc = calculateItemTotal(item.productId, item.price, item.quantity);
                   return (
                     <div
                       key={item.id}
@@ -83,6 +85,22 @@ export const CartSection: React.FC<CartSectionProps> = ({
                           <div className="text-xs text-[#4A211D]/70 font-medium mt-0.5">
                             {formatRupiah(item.price)} {item.unit}
                           </div>
+
+                          {/* Promo active tag or prompt */}
+                          {itemCalc.promoApplied ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md mt-1">
+                              <Sparkles className="w-3 h-3 fill-emerald-600 text-emerald-600" />
+                              Promo 3 Pcs (Hemat {formatRupiah(itemCalc.discount)})
+                            </span>
+                          ) : item.productId === 'chocolate-mochi' ? (
+                            <button
+                              type="button"
+                              onClick={() => onUpdateQuantity(item.id, 3)}
+                              className="text-[11px] font-semibold text-[#D94D82] hover:underline mt-1 block"
+                            >
+                              💡 Beli 3 pcs harga promo Rp 20.000 (+ Jadi 3)
+                            </button>
+                          ) : null}
                         </div>
                       </div>
 
@@ -111,9 +129,14 @@ export const CartSection: React.FC<CartSectionProps> = ({
 
                         {/* Line Total */}
                         <div className="text-right shrink-0">
-                          <span className="font-bold text-sm sm:text-base text-[#4A211D] tabular-nums">
-                            {formatRupiah(lineTotal)}
-                          </span>
+                          <div className="font-bold text-sm sm:text-base text-[#4A211D] tabular-nums">
+                            {formatRupiah(itemCalc.finalTotal)}
+                          </div>
+                          {itemCalc.promoApplied && (
+                            <div className="text-[10px] text-stone-400 line-through tabular-nums">
+                              {formatRupiah(itemCalc.originalTotal)}
+                            </div>
+                          )}
                         </div>
 
                         {/* Delete Button */}
@@ -131,14 +154,22 @@ export const CartSection: React.FC<CartSectionProps> = ({
                 })}
               </div>
 
-              {/* Subtotal Calculation */}
-              <div className="pt-5 sm:pt-6 border-t-2 border-[#F9DCE5] flex items-center justify-between sm:justify-end gap-4 sm:gap-6 text-right">
-                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#4A211D]/70">
-                  Subtotal
-                </span>
-                <span className="font-['Playfair_Display'] font-bold text-xl sm:text-3xl text-[#D94D82] tabular-nums">
-                  {formatRupiah(subtotal)}
-                </span>
+              {/* Subtotal Calculation & Savings */}
+              <div className="pt-5 sm:pt-6 border-t-2 border-[#F9DCE5] flex flex-col items-end gap-1.5 text-right">
+                <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 w-full">
+                  <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#4A211D]/70">
+                    Subtotal
+                  </span>
+                  <span className="font-['Playfair_Display'] font-bold text-xl sm:text-3xl text-[#D94D82] tabular-nums">
+                    {formatRupiah(subtotal)}
+                  </span>
+                </div>
+                {totalDiscount > 0 && (
+                  <div className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
+                    <span>Hemat {formatRupiah(totalDiscount)} dari Promo Mochi Coklat!</span>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}

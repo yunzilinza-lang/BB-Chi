@@ -12,6 +12,7 @@ import {
   buildDirectBuyMessage,
   buildWhatsAppChatUrl,
   formatRupiah,
+  calculateItemTotal,
 } from './data/initialBusinessConfig';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -150,19 +151,26 @@ export default function App() {
   // Quick checkout for whatever is in cart directly to WhatsApp
   const handleQuickCartWhatsAppCheckout = () => {
     if (cart.length === 0) return;
+    let promoSavings = 0;
     const itemsText = cart
       .map((item) => {
         const variantText = item.selectedVariant ? ` (${item.selectedVariant})` : '';
-        const lineTotal = item.price * item.quantity;
-        return `- ${item.name}${variantText} x${item.quantity} = ${formatRupiah(lineTotal)}`;
+        const calc = calculateItemTotal(item.productId, item.price, item.quantity);
+        promoSavings += calc.discount;
+        if (calc.promoApplied) {
+          return `- ${item.name}${variantText} x${item.quantity} = ${formatRupiah(calc.finalTotal)} (Promo 3 pcs, hemat ${formatRupiah(calc.discount)})`;
+        }
+        return `- ${item.name}${variantText} x${item.quantity} = ${formatRupiah(calc.finalTotal)}`;
       })
       .join('\n');
+
+    const promoSavingsText = promoSavings > 0 ? `\nTotal Hemat Promo: ${formatRupiah(promoSavings)}` : '';
 
     const message = `Halo BB Chi! Saya mau beli langsung pesanan ini:
 
 ${itemsText}
 
-Total: ${formatRupiah(subtotal)}
+Total: ${formatRupiah(subtotal)}${promoSavingsText}
 
 Mohon info ketersediaan slot hari ini / batch terdekat dan nomor rekening/pembayarannya ya. Terima kasih!`;
     const url = buildWhatsAppChatUrl(settings.whatsappNumber, message);
@@ -175,7 +183,17 @@ Mohon info ketersediaan slot hari ini / batch terdekat dan nomor rekening/pembay
   }, [cart]);
 
   const subtotal = useMemo(() => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cart.reduce((total, item) => {
+      const calc = calculateItemTotal(item.productId, item.price, item.quantity);
+      return total + calc.finalTotal;
+    }, 0);
+  }, [cart]);
+
+  const totalDiscount = useMemo(() => {
+    return cart.reduce((total, item) => {
+      const calc = calculateItemTotal(item.productId, item.price, item.quantity);
+      return total + calc.discount;
+    }, 0);
   }, [cart]);
 
   const scrollTo = (elementId: string) => {
@@ -225,6 +243,7 @@ Mohon info ketersediaan slot hari ini / batch terdekat dan nomor rekening/pembay
         <CartSection
           cart={cart}
           subtotal={subtotal}
+          totalDiscount={totalDiscount}
           onUpdateQuantity={handleUpdateQuantity}
           onRemoveItem={handleRemoveItem}
           onContinueShopping={() => scrollTo('katalog')}
@@ -236,6 +255,7 @@ Mohon info ketersediaan slot hari ini / batch terdekat dan nomor rekening/pembay
         <PreOrderSection
           cart={cart}
           subtotal={subtotal}
+          totalDiscount={totalDiscount}
           settings={settings}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onBrowseCatalog={() => scrollTo('katalog')}
