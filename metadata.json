@@ -1,0 +1,6 @@
+{
+  "name": "BB Chi — Too Sweet to Handle",
+  "description": "Website resmi BB Chi: dessert mochi dan pudot lezat di Bali dengan tekstur lembut, rasa memikat, dan sistem pre-order via WhatsApp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
